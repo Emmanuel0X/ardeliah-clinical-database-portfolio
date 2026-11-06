@@ -1,0 +1,18 @@
+# Raw psql timings. The first three "Time:" lines are the CREATE TEMP TABLE / CREATE INDEX statements, not inserts.
+Time: 7.313 ms
+Time: 0.843 ms
+Time: 0.966 ms
+=== run 1: insert without the index ===
+Time: 43.499 ms
+=== run 1: insert with the index ===
+Time: 249.636 ms
+Time: 5.668 ms
+=== run 2: insert without the index ===
+Time: 36.479 ms
+=== run 2: insert with the index ===
+Time: 247.793 ms
+Time: 4.544 ms
+=== run 3: insert without the index ===
+Time: 37.957 ms
+=== run 3: insert with the index ===
+Time: 252.698 ms
