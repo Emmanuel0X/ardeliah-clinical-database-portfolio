@@ -1,0 +1,6 @@
+Query                                       median (ms)     min (ms)     max (ms)
+K1 patient name search (Q1)                       1.427        1.244        4.026
+K2 patient appointment history (Q2)              10.218        8.352       14.043
+K3 patient prescription history (Q4)             20.973       17.508       25.846
+K4 doctor week sheet (Q11)                        0.429        0.246        0.495
+K5 urgent lab work queue (Q12)                    4.735        4.625        4.905
