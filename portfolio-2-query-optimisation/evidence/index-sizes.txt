@@ -1,0 +1,12 @@
+              index               |  size   
+----------------------------------+---------
+ idx_appointment_patient_date     | 5720 kB
+ idx_prescription_consultation    | 1928 kB
+ idx_lab_request_consultation     | 1296 kB
+ idx_prescription_item_medication | 968 kB
+ idx_history_patient_condition    | 336 kB
+ idx_patient_name                 | 184 kB
+ idx_lab_request_pending          | 16 kB
+(7 rows)
+
+appointment table: 18 MB, lab_request table: 4368 kB

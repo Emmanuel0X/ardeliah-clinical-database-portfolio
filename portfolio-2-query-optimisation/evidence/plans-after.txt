@@ -1,0 +1,136 @@
+=== K1 patient name search (Q1) ===
+Limit  (cost=75.53..75.56 rows=10 width=33) (actual time=0.127..0.128 rows=10 loops=1)
+  Buffers: shared hit=27
+  ->  Sort  (cost=75.53..75.59 rows=22 width=33) (actual time=0.126..0.126 rows=10 loops=1)
+        Sort Key: date_of_birth
+        Sort Method: top-N heapsort  Memory: 26kB
+        Buffers: shared hit=27
+        ->  Bitmap Heap Scan on patient  (cost=4.51..75.06 rows=22 width=33) (actual time=0.023..0.095 rows=24 loops=1)
+              Recheck Cond: (((last_name)::text = 'Okeke'::text) AND ((first_name)::text = 'Chinedu'::text))
+              Heap Blocks: exact=22
+              Buffers: shared hit=24
+              ->  Bitmap Index Scan on idx_patient_name  (cost=0.00..4.51 rows=22 width=0) (actual time=0.012..0.012 rows=24 loops=1)
+                    Index Cond: (((last_name)::text = 'Okeke'::text) AND ((first_name)::text = 'Chinedu'::text))
+                    Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=141
+Planning Time: 0.411 ms
+Execution Time: 0.161 ms
+
+=== K2 patient appointment history (Q2) ===
+Limit  (cost=45.98..46.00 rows=10 width=68) (actual time=0.143..0.147 rows=9 loops=1)
+  Buffers: shared hit=22
+  ->  Sort  (cost=45.98..46.00 rows=10 width=68) (actual time=0.142..0.145 rows=9 loops=1)
+        Sort Key: a.appointment_date DESC, a.start_time
+        Sort Method: quicksort  Memory: 26kB
+        Buffers: shared hit=22
+        ->  Hash Join  (cost=7.58..45.81 rows=10 width=68) (actual time=0.075..0.123 rows=9 loops=1)
+              Hash Cond: (d.specialisation_id = s.specialisation_id)
+              Buffers: shared hit=14
+              ->  Hash Join  (cost=6.40..44.55 rows=10 width=35) (actual time=0.046..0.090 rows=9 loops=1)
+                    Hash Cond: (a.doctor_id = d.doctor_id)
+                    Buffers: shared hit=13
+                    ->  Bitmap Heap Scan on appointment a  (cost=4.50..42.62 rows=10 width=25) (actual time=0.021..0.061 rows=9 loops=1)
+                          Recheck Cond: (patient_id = 7421)
+                          Heap Blocks: exact=9
+                          Buffers: shared hit=12
+                          ->  Bitmap Index Scan on idx_appointment_patient_date  (cost=0.00..4.50 rows=10 width=0) (actual time=0.011..0.011 rows=9 loops=1)
+                                Index Cond: (patient_id = 7421)
+                                Buffers: shared hit=3
+                    ->  Hash  (cost=1.40..1.40 rows=40 width=18) (actual time=0.013..0.013 rows=40 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                          Buffers: shared hit=1
+                          ->  Seq Scan on doctor d  (cost=0.00..1.40 rows=40 width=18) (actual time=0.001..0.005 rows=40 loops=1)
+                                Buffers: shared hit=1
+              ->  Hash  (cost=1.08..1.08 rows=8 width=17) (actual time=0.017..0.018 rows=8 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on specialisation s  (cost=0.00..1.08 rows=8 width=17) (actual time=0.006..0.007 rows=8 loops=1)
+                          Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=418
+Planning Time: 0.777 ms
+Execution Time: 0.207 ms
+
+=== K3 patient prescription history (Q4) ===
+Sort  (cost=133.93..133.95 rows=8 width=64) (actual time=0.235..0.237 rows=5 loops=1)
+  Sort Key: a.appointment_date DESC, m.generic_name
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=69
+  ->  Nested Loop  (cost=5.51..133.81 rows=8 width=64) (actual time=0.197..0.206 rows=5 loops=1)
+        Join Filter: (pi.medication_id = m.medication_id)
+        Rows Removed by Join Filter: 55
+        Buffers: shared hit=63
+        ->  Seq Scan on medication m  (cost=0.00..1.12 rows=12 width=31) (actual time=0.002..0.004 rows=12 loops=1)
+              Buffers: shared hit=1
+        ->  Materialize  (cost=5.51..131.27 rows=8 width=41) (actual time=0.005..0.016 rows=5 loops=12)
+              Buffers: shared hit=62
+              ->  Nested Loop  (cost=5.51..131.23 rows=8 width=41) (actual time=0.058..0.181 rows=5 loops=1)
+                    Buffers: shared hit=62
+                    ->  Nested Loop  (cost=5.09..128.49 rows=5 width=17) (actual time=0.044..0.143 rows=3 loops=1)
+                          Buffers: shared hit=48
+                          ->  Nested Loop  (cost=4.79..125.74 rows=8 width=8) (actual time=0.035..0.116 rows=5 loops=1)
+                                Buffers: shared hit=35
+                                ->  Bitmap Heap Scan on appointment a  (cost=4.50..42.62 rows=10 width=8) (actual time=0.020..0.055 rows=9 loops=1)
+                                      Recheck Cond: (patient_id = 7421)
+                                      Heap Blocks: exact=9
+                                      Buffers: shared hit=12
+                                      ->  Bitmap Index Scan on idx_appointment_patient_date  (cost=0.00..4.50 rows=10 width=0) (actual time=0.010..0.011 rows=9 loops=1)
+                                            Index Cond: (patient_id = 7421)
+                                            Buffers: shared hit=3
+                                ->  Index Scan using consultation_appointment_id_key on consultation c  (cost=0.29..8.31 rows=1 width=8) (actual time=0.006..0.006 rows=1 loops=9)
+                                      Index Cond: (appointment_id = a.appointment_id)
+                                      Buffers: shared hit=23
+                          ->  Index Scan using idx_prescription_consultation on prescription pr  (cost=0.29..0.33 rows=1 width=17) (actual time=0.005..0.005 rows=1 loops=5)
+                                Index Cond: (consultation_id = c.consultation_id)
+                                Buffers: shared hit=13
+                    ->  Index Scan using prescription_item_pkey on prescription_item pi  (cost=0.42..0.53 rows=2 width=32) (actual time=0.010..0.012 rows=2 loops=3)
+                          Index Cond: (prescription_id = pr.prescription_id)
+                          Buffers: shared hit=14
+Planning:
+  Buffers: shared hit=462
+Planning Time: 1.349 ms
+Execution Time: 0.326 ms
+
+=== K4 doctor week sheet (Q11) ===
+Sort  (cost=277.75..277.81 rows=24 width=69) (actual time=0.285..0.288 rows=29 loops=1)
+  Sort Key: a.appointment_date, a.start_time
+  Sort Method: quicksort  Memory: 27kB
+  Buffers: shared hit=112
+  ->  Nested Loop  (cost=5.01..277.20 rows=24 width=69) (actual time=0.056..0.251 rows=29 loops=1)
+        Buffers: shared hit=104
+        ->  Bitmap Heap Scan on appointment a  (cost=4.73..93.76 rows=24 width=41) (actual time=0.039..0.066 rows=29 loops=1)
+              Recheck Cond: ((doctor_id = 12) AND (appointment_date >= '2026-10-12'::date) AND (appointment_date <= '2026-10-16'::date) AND ((status)::text <> 'CANCELLED'::text))
+              Heap Blocks: exact=14
+              Buffers: shared hit=17
+              ->  Bitmap Index Scan on uq_doctor_slot_active  (cost=0.00..4.72 rows=24 width=0) (actual time=0.028..0.028 rows=29 loops=1)
+                    Index Cond: ((doctor_id = 12) AND (appointment_date >= '2026-10-12'::date) AND (appointment_date <= '2026-10-16'::date))
+                    Buffers: shared hit=3
+        ->  Index Scan using patient_pkey on patient p  (cost=0.29..7.64 rows=1 width=17) (actual time=0.006..0.006 rows=1 loops=29)
+              Index Cond: (patient_id = a.patient_id)
+              Buffers: shared hit=87
+Planning:
+  Buffers: shared hit=333
+Planning Time: 0.879 ms
+Execution Time: 0.344 ms
+
+=== K5 urgent lab work queue (Q12) ===
+Limit  (cost=0.15..424.23 rows=20 width=42) (actual time=0.049..0.280 rows=20 loops=1)
+  Buffers: shared hit=200
+  ->  Nested Loop  (cost=0.15..1060.36 rows=50 width=42) (actual time=0.048..0.277 rows=20 loops=1)
+        Join Filter: (t.test_id = rq.test_id)
+        Rows Removed by Join Filter: 83
+        Buffers: shared hit=200
+        ->  Index Scan using idx_lab_request_pending on lab_request rq  (cost=0.15..1053.82 rows=50 width=26) (actual time=0.035..0.250 rows=20 loops=1)
+              Filter: ((priority)::text = 'URGENT'::text)
+              Rows Removed by Filter: 190
+              Buffers: shared hit=199
+        ->  Materialize  (cost=0.00..1.12 rows=8 width=24) (actual time=0.000..0.001 rows=5 loops=20)
+              Buffers: shared hit=1
+              ->  Seq Scan on lab_test_catalog t  (cost=0.00..1.08 rows=8 width=24) (actual time=0.003..0.004 rows=8 loops=1)
+                    Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=305
+Planning Time: 0.722 ms
+Execution Time: 0.307 ms
+
