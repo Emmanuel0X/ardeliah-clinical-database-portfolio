@@ -1,0 +1,213 @@
+-- =====================================================================
+-- Ardeliah Clinical System: single-session transaction examples
+-- Portfolio 3: Transactions and Concurrency
+--
+-- Run (after Portfolios 1 and 2 have built the database):
+--   psql -a -d ardeliah -f transaction-scripts.sql
+-- (-a echoes each statement so the output reads like a transcript.)
+--
+-- Deliberately do NOT use ON_ERROR_STOP here: several examples contain a
+-- statement that is MEANT to fail, to show what the database does next.
+-- All demo rows carry a reason starting 'P3 txn' and are removed at the
+-- start and end of the script, so it can be re-run safely.
+--
+-- ACID properties demonstrated:
+--   T1 COMMIT   -> Atomicity + Consistency + Durability (all-or-nothing booking)
+--   T2 failure  -> Atomicity (an error undoes EVERYTHING in the transaction)
+--   T3 ROLLBACK -> Atomicity (voluntary undo, and isolation from other sessions)
+--   T4 SAVEPOINT-> Partial rollback inside a larger transaction
+--   T5 e-prescription -> Atomicity across parent/child rows + CHECK constraint
+-- Durability under a crash is demonstrated separately (see README).
+-- =====================================================================
+SET search_path TO ardeliah;
+SET
+-- Clean up anything left from a previous run (children first).
+DELETE FROM audit_log   WHERE details LIKE 'P3 txn%';
+DELETE 0
+DELETE FROM consultation WHERE appointment_id IN
+       (SELECT appointment_id FROM appointment WHERE reason LIKE 'P3 txn%');
+DELETE 0
+DELETE FROM appointment WHERE reason LIKE 'P3 txn%';
+DELETE 0
+\echo
+
+\echo '######## T1: COMMIT - book an appointment and write its audit entry together'
+######## T1: COMMIT - book an appointment and write its audit entry together
+-- Business rule: every booking made by reception must leave an audit
+-- record. The two inserts must succeed or fail as ONE unit.
+BEGIN;
+BEGIN
+WITH new_appt AS (
+    INSERT INTO appointment (patient_id, doctor_id, booked_by_staff_id,
+                             appointment_date, start_time, reason)
+    VALUES (20001, 40, 1, '2027-03-05', '09:00', 'P3 txn: T1 committed booking')
+    RETURNING appointment_id
+)
+INSERT INTO audit_log (table_name, action, record_id, performed_by, details)
+SELECT 'appointment', 'INSERT', appointment_id, 5, 'P3 txn: T1 booked by receptionist'
+FROM new_appt;
+INSERT 0 1
+COMMIT;
+COMMIT
+-- Both rows are now permanent (durable) and visible to every session.
+SELECT a.appointment_id, a.status, a.reason, l.details AS audit_entry
+FROM appointment a
+JOIN audit_log l ON l.table_name = 'appointment' AND l.record_id = a.appointment_id
+WHERE a.reason = 'P3 txn: T1 committed booking';
+ appointment_id |  status   |            reason            |            audit_entry            
+----------------+-----------+------------------------------+-----------------------------------
+         185310 | SCHEDULED | P3 txn: T1 committed booking | P3 txn: T1 booked by receptionist
+(1 row)
+
+\echo
+
+\echo '######## T2: failure mid-transaction - everything is undone (atomicity)'
+######## T2: failure mid-transaction - everything is undone (atomicity)
+-- The second booking asks for the same doctor and slot as the first, so
+-- it violates the partial unique index uq_doctor_slot_active. The
+-- audit row and the FIRST appointment, which were fine on their own, must
+-- also disappear.
+BEGIN;
+BEGIN
+INSERT INTO appointment (patient_id, doctor_id, booked_by_staff_id,
+                         appointment_date, start_time, reason)
+VALUES (20002, 40, 1, '2027-03-05', '10:00', 'P3 txn: T2 first booking');
+INSERT 0 1
+INSERT INTO audit_log (table_name, action, record_id, performed_by, details)
+VALUES ('appointment', 'INSERT', 0, 5, 'P3 txn: T2 audit for first booking');
+INSERT 0 1
+-- Same doctor, same date, same time as the booking above: this fails.
+INSERT INTO appointment (patient_id, doctor_id, booked_by_staff_id,
+                         appointment_date, start_time, reason)
+VALUES (20003, 40, 1, '2027-03-05', '10:00', 'P3 txn: T2 clashing booking');
+psql:transaction-scripts.sql:73: ERROR:  duplicate key value violates unique constraint "uq_doctor_slot_active"
+DETAIL:  Key (doctor_id, appointment_date, start_time)=(40, 2027-03-05, 10:00:00) already exists.
+-- After an error PostgreSQL marks the transaction as aborted: further
+-- statements are refused until ROLLBACK. COMMIT on an aborted
+-- transaction is turned into a ROLLBACK (the reply says ROLLBACK).
+SELECT 'this statement is ignored' AS note;
+psql:transaction-scripts.sql:78: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+COMMIT;
+ROLLBACK
+-- Nothing from T2 survived, not even the valid first booking.
+SELECT (SELECT count(*) FROM appointment WHERE reason LIKE 'P3 txn: T2%') AS t2_appointments,
+       (SELECT count(*) FROM audit_log   WHERE details LIKE 'P3 txn: T2%') AS t2_audit_rows;
+ t2_appointments | t2_audit_rows 
+-----------------+---------------
+               0 |             0
+(1 row)
+
+\echo
+
+\echo '######## T3: voluntary ROLLBACK - patient changes their mind'
+######## T3: voluntary ROLLBACK - patient changes their mind
+BEGIN;
+BEGIN
+UPDATE appointment SET status = 'CANCELLED'
+WHERE reason = 'P3 txn: T1 committed booking';
+UPDATE 1
+-- Inside this transaction the change is visible...
+SELECT appointment_id, status FROM appointment
+WHERE reason = 'P3 txn: T1 committed booking';
+ appointment_id |  status   
+----------------+-----------
+         185310 | CANCELLED
+(1 row)
+
+ROLLBACK;
+ROLLBACK
+-- ...but after ROLLBACK it never happened.
+SELECT appointment_id, status FROM appointment
+WHERE reason = 'P3 txn: T1 committed booking';
+ appointment_id |  status   
+----------------+-----------
+         185310 | SCHEDULED
+(1 row)
+
+\echo
+
+\echo '######## T4: SAVEPOINT - undo only part of a transaction'
+######## T4: SAVEPOINT - undo only part of a transaction
+-- A consultation is recorded and a lab request is attached. The first
+-- lab request names a test that does not exist, so it fails; a savepoint
+-- lets us undo just that step and carry on without losing the consultation.
+BEGIN;
+BEGIN
+INSERT INTO appointment (patient_id, doctor_id, appointment_date, start_time, status, reason)
+VALUES (19990, 40, '2027-03-05', '11:00', 'COMPLETED', 'P3 txn: T4 savepoint');
+INSERT 0 1
+INSERT INTO consultation (appointment_id, clinical_notes)
+SELECT appointment_id, 'Fever for two days.'
+FROM appointment WHERE reason = 'P3 txn: T4 savepoint';
+INSERT 0 1
+SAVEPOINT before_lab_request;
+SAVEPOINT
+INSERT INTO lab_request (consultation_id, test_id)
+SELECT c.consultation_id, 9999                  -- no such test: FK violation
+FROM consultation c JOIN appointment a ON a.appointment_id = c.appointment_id
+WHERE a.reason = 'P3 txn: T4 savepoint';
+psql:transaction-scripts.sql:123: ERROR:  insert or update on table "lab_request" violates foreign key constraint "lab_request_test_id_fkey"
+DETAIL:  Key (test_id)=(9999) is not present in table "lab_test_catalog".
+ROLLBACK TO SAVEPOINT before_lab_request;       -- transaction is usable again
+ROLLBACK
+INSERT INTO lab_request (consultation_id, test_id, priority)
+SELECT c.consultation_id, 1, 'URGENT'           -- test 1 = malaria parasite count
+FROM consultation c JOIN appointment a ON a.appointment_id = c.appointment_id
+WHERE a.reason = 'P3 txn: T4 savepoint';
+INSERT 0 1
+COMMIT;
+COMMIT
+-- The consultation and the valid lab request were kept.
+SELECT a.reason, c.clinical_notes, t.test_name, r.priority
+FROM appointment a
+JOIN consultation c ON c.appointment_id = a.appointment_id
+JOIN lab_request r  ON r.consultation_id = c.consultation_id
+JOIN lab_test_catalog t ON t.test_id = r.test_id
+WHERE a.reason = 'P3 txn: T4 savepoint';
+        reason        |   clinical_notes    |          test_name          | priority 
+----------------------+---------------------+-----------------------------+----------
+ P3 txn: T4 savepoint | Fever for two days. | Malaria parasite (MP) count | URGENT
+(1 row)
+
+\echo
+
+\echo '######## T5: e-prescription - header and lines succeed or fail together'
+######## T5: e-prescription - header and lines succeed or fail together
+-- Issue a prescription for consultation 1 with two drug lines. The second
+-- line has duration_days = 0, which violates a CHECK (duration_days > 0).
+-- The prescription HEADER must not be left behind without its lines.
+SELECT count(*) AS prescriptions_before FROM prescription WHERE consultation_id = 1;
+ prescriptions_before 
+----------------------
+                    1
+(1 row)
+
+BEGIN;
+BEGIN
+INSERT INTO prescription (consultation_id) VALUES (1);
+INSERT 0 1
+INSERT INTO prescription_item (prescription_id, medication_id, dosage, frequency, duration_days)
+VALUES (currval(pg_get_serial_sequence('ardeliah.prescription', 'prescription_id')),
+        3, '1 capsule', 'three times daily', 5);                -- fine
+INSERT 0 1
+INSERT INTO prescription_item (prescription_id, medication_id, dosage, frequency, duration_days)
+VALUES (currval(pg_get_serial_sequence('ardeliah.prescription', 'prescription_id')),
+        2, '1 tablet', 'twice daily', 0);                       -- violates CHECK
+psql:transaction-scripts.sql:160: ERROR:  new row for relation "prescription_item" violates check constraint "prescription_item_duration_days_check"
+DETAIL:  Failing row contains (87391, 2, 1 tablet, twice daily, 0).
+COMMIT;     -- becomes ROLLBACK because the transaction is aborted
+ROLLBACK
+SELECT count(*) AS prescriptions_after FROM prescription WHERE consultation_id = 1;
+ prescriptions_after 
+---------------------
+                   1
+(1 row)
+
+-- Final clean-up so the database is left as it was found.
+DELETE FROM audit_log   WHERE details LIKE 'P3 txn%';
+DELETE 1
+DELETE FROM consultation WHERE appointment_id IN
+       (SELECT appointment_id FROM appointment WHERE reason LIKE 'P3 txn%');
+DELETE 1
+DELETE FROM appointment WHERE reason LIKE 'P3 txn%';
+DELETE 2
