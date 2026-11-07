@@ -1,0 +1,39 @@
+
+=== 0. Clean any earlier replica
+
+=== 1. Primary settings relevant to replication
+hot_standby = on
+max_wal_senders = 10
+wal_level = replica
+
+=== 2. Take a base backup and configure it as a standby (pg_basebackup -R)
+server started
+
+=== 3. Is the replica in recovery (a standby)?
+primary pg_is_in_recovery = f
+replica pg_is_in_recovery = t
+
+=== 4. Primary sees the replica streaming
+streaming, sync_state=async
+
+=== 5. Write on the primary, read on the replica
+replica sees rows: 1 (note: written on primary)
+row counts primary/replica patient: 20003 / 20003
+
+=== 6. The replica refuses writes (read-only standby)
+ERROR:  cannot execute INSERT in a read-only transaction
+
+=== 7. Replication lag right after a burst of writes
+primary wal lsn - replay lsn (bytes) = 2148344
+after 1s, replica rows: 20001
+primary rows: 20001
+
+=== 8. Failover: stop the primary's role, promote the replica
+server promoted
+replica pg_is_in_recovery after promote = f
+write on promoted replica: accepted
+promoted node rows: 20002
+old primary rows (diverged, as expected after promotion): 20001
+
+=== 9. Clean up: stop and delete the replica, drop the probe table
+done

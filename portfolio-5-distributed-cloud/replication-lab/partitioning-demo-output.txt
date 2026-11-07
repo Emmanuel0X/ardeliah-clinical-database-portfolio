@@ -1,0 +1,36 @@
+INSERT 0 185304
+ANALYZE
+--- rows per shard (an even spread is the point of hashing)
+  shard  | count 
+---------+-------
+ appt_s0 | 46158
+ appt_s1 | 46795
+ appt_s2 | 46676
+ appt_s3 | 45675
+(4 rows)
+
+--- lookup WITH the shard key: one partition scanned
+                QUERY PLAN                
+------------------------------------------
+ Bitmap Heap Scan on appt_s0 appt_sharded
+   Recheck Cond: (patient_id = 12)
+   ->  Bitmap Index Scan on appt_s0_pkey
+         Index Cond: (patient_id = 12)
+(4 rows)
+
+--- query WITHOUT the shard key: every partition scanned (scatter-gather)
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Gather
+   Workers Planned: 2
+   ->  Parallel Append
+         ->  Parallel Seq Scan on appt_s1 appt_sharded_2
+               Filter: ((appointment_date >= '2026-10-01'::date) AND (doctor_id = 5))
+         ->  Parallel Seq Scan on appt_s2 appt_sharded_3
+               Filter: ((appointment_date >= '2026-10-01'::date) AND (doctor_id = 5))
+         ->  Parallel Seq Scan on appt_s0 appt_sharded_1
+               Filter: ((appointment_date >= '2026-10-01'::date) AND (doctor_id = 5))
+         ->  Parallel Seq Scan on appt_s3 appt_sharded_4
+               Filter: ((appointment_date >= '2026-10-01'::date) AND (doctor_id = 5))
+(11 rows)
+

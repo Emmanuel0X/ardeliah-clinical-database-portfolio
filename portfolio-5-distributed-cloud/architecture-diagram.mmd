@@ -1,0 +1,25 @@
+flowchart TB
+  users["Patients, doctors, reception, lab<br/>(web and mobile apps)"]
+  subgraph vpc["VPC in one AWS Region"]
+    alb["Load balancer (HTTPS)"]
+    subgraph appsub["Private app subnets"]
+      app1["App server AZ-a"]
+      app2["App server AZ-b"]
+    end
+    subgraph az1["Availability Zone A (private DB subnet)"]
+      pri[("RDS PostgreSQL<br/>PRIMARY")]
+    end
+    subgraph az2["Availability Zone B (private DB subnet)"]
+      stby[("Multi-AZ standby<br/>not readable")]
+      rr[("Read replica<br/>reports and search")]
+    end
+  end
+  s3["S3 backup copies<br/>(encrypted, cross-Region)"]
+  kms["KMS keys"]
+  users --> alb --> app1 & app2
+  app1 & app2 -- "writes and reads" --> pri
+  app1 & app2 -. "read-only queries" .-> rr
+  pri == "synchronous" ==> stby
+  pri -. "asynchronous" .-> rr
+  pri -. "automated backups and WAL" .-> s3
+  kms -. "encrypts" .-> pri
