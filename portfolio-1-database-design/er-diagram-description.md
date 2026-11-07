@@ -182,3 +182,5 @@ erDiagram
 - The clinic is outpatient only, so there are no ward admissions or bed management.
 - Billing and payments are outside the scope of this case study. The transaction exercises in Portfolio 3 use appointment booking with an audit entry instead.
 - Each appointment is a fixed-length slot identified by its start time.
+
+A pre-rendered image of the diagram above is in `er-diagram.png` (generated from this Mermaid source with the Mermaid CLI), for viewers that do not draw Mermaid.
