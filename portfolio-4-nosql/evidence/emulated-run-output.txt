@@ -1,0 +1,639 @@
+# Emulated run of the Portfolio 4 scripts (NOT a real MongoDB server)
+# Engine: mingo (MongoDB query/aggregation semantics) + ajv (JSON Schema). See verification/run-with-mingo.mjs.
+# Order: create-collections.js, import-data.sh, insert-sample-documents.js, queries.js, write-examples.js
+
+
+############ create-collections.js
+Collections: appointments, consultations, doctors, icd_codes, lab_tests, medications, patients, staff, users
+
+############ import-data.sh (emulated)
+== importing users
+(emulated mongoimport) 7 document(s) imported successfully, 0 failed (validators and unique indexes enforced)
+== importing staff
+(emulated mongoimport) 14 document(s) imported successfully, 0 failed (validators and unique indexes enforced)
+== importing icd_codes
+(emulated mongoimport) 12 document(s) imported successfully, 0 failed (validators and unique indexes enforced)
+== importing medications
+(emulated mongoimport) 12 document(s) imported successfully, 0 failed (validators and unique indexes enforced)
+== importing lab_tests
+(emulated mongoimport) 8 document(s) imported successfully, 0 failed (validators and unique indexes enforced)
+== importing doctors
+(emulated mongoimport) 40 document(s) imported successfully, 0 failed (validators and unique indexes enforced)
+== importing patients
+(emulated mongoimport) 303 document(s) imported successfully, 0 failed (validators and unique indexes enforced)
+== importing appointments
+(emulated mongoimport) 2760 document(s) imported successfully, 0 failed (validators and unique indexes enforced)
+== importing consultations
+(emulated mongoimport) 2161 document(s) imported successfully, 0 failed (validators and unique indexes enforced)
+== document counts
+appointments  2760
+consultations 2161
+doctors       40
+icd_codes     12
+lab_tests     8
+medications   12
+patients      303
+staff         14
+users         7
+
+############ insert-sample-documents.js
+Inserted: 2 patients, 2 appointments, 1 consultation
+{
+  "_id": 900001,
+  "appointment_id": 900001,
+  "patient_id": 900001,
+  "doctor_id": 1,
+  "consulted_at": ISODate("2027-03-10T08:10:00.000Z"),
+  "clinical_notes": "Wheeze on auscultation, no fever. Known asthma. Looks pale; check blood count.",
+  "diagnoses": [
+    {
+      "icd_code": "J45.9",
+      "description": "Asthma, unspecified",
+      "severity": "MODERATE",
+      "notes": "Poor control this month"
+    },
+    {
+      "icd_code": "J06.9",
+      "description": "Acute upper respiratory infection, unspecified",
+      "severity": "MILD"
+    }
+  ],
+  "prescriptions": [
+    {
+      "prescription_id": 900001,
+      "issued_at": ISODate("2027-03-10T08:40:00.000Z"),
+      "status": "ISSUED",
+      "items": [
+        {
+          "medication": {
+            "generic_name": "Salbutamol",
+            "form": "inhaler",
+            "strength": "100 mcg"
+          },
+          "dosage": "2 puffs",
+          "frequency": "every 6 hours as needed",
+          "duration_days": 14
+        },
+        {
+          "medication": {
+            "generic_name": "Paracetamol",
+            "form": "tablet",
+            "strength": "500 mg"
+          },
+          "dosage": "2 tablets",
+          "frequency": "every 6 hours as needed",
+          "duration_days": 3
+        }
+      ]
+    }
+  ],
+  "lab_requests": [
+    {
+      "lab_request_id": 900001,
+      "test": {
+        "name": "Haemoglobin",
+        "unit": "g/dL"
+      },
+      "priority": "ROUTINE",
+      "status": "COMPLETED",
+      "requested_at": ISODate("2027-03-10T08:15:00.000Z"),
+      "result": {
+        "value": 10.8,
+        "abnormal": true,
+        "comment": "Mild anaemia",
+        "recorded_at": ISODate("2027-03-10T09:05:00.000Z"),
+        "technician_id": 2
+      }
+    },
+    {
+      "lab_request_id": 900002,
+      "test": {
+        "name": "White blood cell count",
+        "unit": "x10^9/L"
+      },
+      "priority": "URGENT",
+      "status": "REQUESTED",
+      "requested_at": ISODate("2027-03-10T08:16:00.000Z")
+    }
+  ]
+}
+
+############ queries.js
+
+=== Q1 patient lookup by name
+[]
+
+=== Q2 appointments of patient 12, newest first
+[
+  {
+    "doctor_name": "Dr Hadiza Adamu",
+    "reason": "Fever and headache",
+    "scheduled_at": ISODate("2026-09-29T11:00:00.000Z"),
+    "status": "CANCELLED"
+  },
+  {
+    "doctor_name": "Dr Hadiza Umoh",
+    "reason": "Blood pressure review",
+    "scheduled_at": ISODate("2026-09-16T13:30:00.000Z"),
+    "status": "COMPLETED"
+  },
+  {
+    "doctor_name": "Dr Peter Akinola",
+    "reason": "Abdominal pain",
+    "scheduled_at": ISODate("2025-11-27T07:30:00.000Z"),
+    "status": "COMPLETED"
+  },
+  {
+    "doctor_name": "Dr Victor Akinola",
+    "reason": "Antenatal visit",
+    "scheduled_at": ISODate("2025-09-17T14:00:00.000Z"),
+    "status": "COMPLETED"
+  },
+  {
+    "doctor_name": "Dr Linda Umoh",
+    "reason": "Diabetes follow-up",
+    "scheduled_at": ISODate("2025-06-04T13:00:00.000Z"),
+    "status": "COMPLETED"
+  }
+]
+
+=== Q3 clinical history of patient 12
+[
+  {
+    "consulted_at": ISODate("2026-09-16T13:40:00.000Z"),
+    "diagnoses": [
+      {
+        "icd_code": "I10"
+      },
+      {
+        "icd_code": "E11.9"
+      }
+    ],
+    "prescriptions": [
+      {
+        "items": [
+          {
+            "medication": {
+              "generic_name": "Amoxicillin"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "consulted_at": ISODate("2025-11-27T07:40:00.000Z"),
+    "diagnoses": [
+      {
+        "icd_code": "L20.9"
+      },
+      {
+        "icd_code": "M54.5"
+      }
+    ],
+    "prescriptions": []
+  },
+  {
+    "consulted_at": ISODate("2025-09-17T14:10:00.000Z"),
+    "diagnoses": [
+      {
+        "icd_code": "J45.9"
+      }
+    ],
+    "prescriptions": []
+  }
+]
+
+=== Q4 complete consultation 1
+{
+  "_id": 1,
+  "appointment_id": 1,
+  "patient_id": 1,
+  "doctor_id": 1,
+  "consulted_at": ISODate("2026-10-20T08:10:00.000Z"),
+  "clinical_notes": "Febrile, temp 38.6C, no neck stiffness. Chills and bodyache. Malaria parasite test ordered.",
+  "diagnoses": [
+    {
+      "icd_code": "B50.9",
+      "description": "Plasmodium falciparum malaria, unspecified",
+      "severity": "MODERATE",
+      "notes": "Confirmed by MP test"
+    }
+  ],
+  "prescriptions": [
+    {
+      "prescription_id": 1,
+      "issued_at": ISODate("2026-10-20T08:40:00.000Z"),
+      "status": "ISSUED",
+      "items": [
+        {
+          "medication": {
+            "generic_name": "Artemether/Lumefantrine",
+            "form": "tablet",
+            "strength": "20/120 mg"
+          },
+          "dosage": "4 tablets",
+          "frequency": "twice daily",
+          "duration_days": 3
+        },
+        {
+          "medication": {
+            "generic_name": "Paracetamol",
+            "form": "tablet",
+            "strength": "500 mg"
+          },
+          "dosage": "2 tablets",
+          "frequency": "every 6 hours as needed",
+          "duration_days": 3
+        }
+      ]
+    }
+  ],
+  "lab_requests": [
+    {
+      "lab_request_id": 1,
+      "test": {
+        "name": "Malaria parasite (MP) count",
+        "unit": "parasites/uL"
+      },
+      "priority": "URGENT",
+      "status": "COMPLETED",
+      "requested_at": ISODate("2026-10-20T08:15:00.000Z"),
+      "result": {
+        "value": 2400,
+        "abnormal": true,
+        "comment": "P. falciparum trophozoites seen",
+        "recorded_at": ISODate("2026-10-20T08:35:00.000Z"),
+        "technician_id": 2
+      }
+    }
+  ]
+}
+
+=== Q5 week sheet of doctor 12 (12 to 16 Oct 2026)
+[
+  {
+    "patient_name": "Abdullahi Chukwu",
+    "reason": "Back pain",
+    "scheduled_at": ISODate("2026-10-13T12:00:00.000Z"),
+    "status": "COMPLETED"
+  }
+]
+
+=== Q6 diagnoses per ICD code
+[
+  {
+    "_id": "A01.0",
+    "description": "Typhoid fever",
+    "total": 233,
+    "severe": 66
+  },
+  {
+    "_id": "A09",
+    "description": "Infectious gastroenteritis and colitis",
+    "total": 226,
+    "severe": 62
+  },
+  {
+    "_id": "K29.7",
+    "description": "Gastritis, unspecified",
+    "total": 225,
+    "severe": 59
+  },
+  {
+    "_id": "N39.0",
+    "description": "Urinary tract infection, site not specified",
+    "total": 225,
+    "severe": 53
+  },
+  {
+    "_id": "I10",
+    "description": "Essential (primary) hypertension",
+    "total": 222,
+    "severe": 67
+  },
+  {
+    "_id": "M54.5",
+    "description": "Low back pain",
+    "total": 221,
+    "severe": 63
+  },
+  {
+    "_id": "E11.9",
+    "description": "Type 2 diabetes mellitus without complications",
+    "total": 215,
+    "severe": 74
+  },
+  {
+    "_id": "J45.9",
+    "description": "Asthma, unspecified",
+    "total": 211,
+    "severe": 66
+  },
+  {
+    "_id": "B50.9",
+    "description": "Plasmodium falciparum malaria, unspecified",
+    "total": 210,
+    "severe": 51
+  },
+  {
+    "_id": "J06.9",
+    "description": "Acute upper respiratory infection, unspecified",
+    "total": 204,
+    "severe": 64
+  },
+  {
+    "_id": "D64.9",
+    "description": "Anaemia, unspecified",
+    "total": 201,
+    "severe": 65
+  },
+  {
+    "_id": "L20.9",
+    "description": "Atopic dermatitis, unspecified",
+    "total": 198,
+    "severe": 50
+  }
+]
+
+=== Q7 prescription lines and drug-days per medication
+[
+  {
+    "_id": "Oral rehydration salts",
+    "prescriptions": 194,
+    "total_drug_days": 1736
+  },
+  {
+    "_id": "Ibuprofen",
+    "prescriptions": 181,
+    "total_drug_days": 1576
+  },
+  {
+    "_id": "Salbutamol",
+    "prescriptions": 173,
+    "total_drug_days": 1506
+  },
+  {
+    "_id": "Omeprazole",
+    "prescriptions": 172,
+    "total_drug_days": 1495
+  },
+  {
+    "_id": "Artemether/Lumefantrine",
+    "prescriptions": 174,
+    "total_drug_days": 1455
+  }
+]
+
+=== Q8 abnormal lab results per test
+[
+  {
+    "abnormal": 39,
+    "abnormal_pct": 36.1,
+    "results": 108,
+    "_id": "Fasting blood glucose"
+  },
+  {
+    "abnormal": 39,
+    "abnormal_pct": 33.3,
+    "results": 117,
+    "_id": "Serum creatinine"
+  },
+  {
+    "abnormal": 38,
+    "abnormal_pct": 30.9,
+    "results": 123,
+    "_id": "Urinalysis: leucocytes"
+  },
+  {
+    "abnormal": 31,
+    "abnormal_pct": 29.8,
+    "results": 104,
+    "_id": "Total cholesterol"
+  },
+  {
+    "abnormal": 33,
+    "abnormal_pct": 29.2,
+    "results": 113,
+    "_id": "Haemoglobin"
+  },
+  {
+    "abnormal": 28,
+    "abnormal_pct": 29.2,
+    "results": 96,
+    "_id": "White blood cell count"
+  },
+  {
+    "abnormal": 21,
+    "abnormal_pct": 24.4,
+    "results": 86,
+    "_id": "Widal titre (O antigen)"
+  },
+  {
+    "abnormal": 15,
+    "abnormal_pct": 15.8,
+    "results": 95,
+    "_id": "Malaria parasite (MP) count"
+  }
+]
+
+=== Q9 malaria patients since 1 Oct 2026 (distinct patient ids)
+[
+  1,
+  23,
+  44,
+  71,
+  117,
+  175,
+  236,
+  300
+]
+
+=== Q10 open lab requests, oldest first
+[
+  {
+    "consultation_id": 142486,
+    "lab_request_id": 53120,
+    "priority": "ROUTINE",
+    "requested_at": ISODate("2026-10-15T13:45:00.000Z"),
+    "status": "COLLECTED",
+    "test": "Total cholesterol"
+  },
+  {
+    "consultation_id": 143489,
+    "lab_request_id": 54751,
+    "priority": "ROUTINE",
+    "requested_at": ISODate("2026-10-22T08:45:00.000Z"),
+    "status": "REQUESTED",
+    "test": "Total cholesterol"
+  },
+  {
+    "consultation_id": 143679,
+    "lab_request_id": 32202,
+    "priority": "ROUTINE",
+    "requested_at": ISODate("2026-10-23T07:15:00.000Z"),
+    "status": "COLLECTED",
+    "test": "White blood cell count"
+  },
+  {
+    "consultation_id": 144168,
+    "lab_request_id": 56219,
+    "priority": "ROUTINE",
+    "requested_at": ISODate("2026-10-27T07:45:00.000Z"),
+    "status": "COLLECTED",
+    "test": "Total cholesterol"
+  },
+  {
+    "consultation_id": 144601,
+    "lab_request_id": 28897,
+    "priority": "ROUTINE",
+    "requested_at": ISODate("2026-10-28T14:45:00.000Z"),
+    "status": "COLLECTED",
+    "test": "Serum creatinine"
+  }
+]
+
+=== Q11 appointment outcomes per month, May to Oct 2026
+[
+  {
+    "_id": "2026-05",
+    "total": 94,
+    "completed": 75,
+    "cancelled": 8,
+    "no_show": 11
+  },
+  {
+    "_id": "2026-06",
+    "total": 85,
+    "completed": 64,
+    "cancelled": 14,
+    "no_show": 7
+  },
+  {
+    "_id": "2026-07",
+    "total": 75,
+    "completed": 53,
+    "cancelled": 10,
+    "no_show": 12
+  },
+  {
+    "_id": "2026-08",
+    "total": 95,
+    "completed": 81,
+    "cancelled": 4,
+    "no_show": 10
+  },
+  {
+    "_id": "2026-09",
+    "total": 75,
+    "completed": 61,
+    "cancelled": 7,
+    "no_show": 7
+  },
+  {
+    "_id": "2026-10",
+    "total": 106,
+    "completed": 80,
+    "cancelled": 11,
+    "no_show": 15
+  }
+]
+
+=== Q12 completed appointments per specialisation, Oct 2026
+[
+  {
+    "_id": "General Practice",
+    "completed": 15
+  },
+  {
+    "_id": "Internal Medicine",
+    "completed": 14
+  },
+  {
+    "_id": "Dermatology",
+    "completed": 12
+  },
+  {
+    "_id": "Obstetrics and Gynaecology",
+    "completed": 12
+  },
+  {
+    "_id": "Cardiology",
+    "completed": 10
+  },
+  {
+    "_id": "Orthopaedics",
+    "completed": 9
+  },
+  {
+    "_id": "Ophthalmology",
+    "completed": 6
+  },
+  {
+    "_id": "Paediatrics",
+    "completed": 2
+  }
+]
+
+=== Q13 diagnoses per consultation
+[
+  {
+    "avg_diagnoses": 1.198,
+    "consultations": 2162
+  }
+]
+
+############ write-examples.js
+
+=== W1 record a lab result
+{
+  "matchedCount": 1,
+  "modifiedCount": 1
+}
+{
+  "lab_request_id": 900002,
+  "test": {
+    "name": "White blood cell count",
+    "unit": "x10^9/L"
+  },
+  "priority": "URGENT",
+  "status": "COMPLETED",
+  "requested_at": ISODate("2027-03-10T08:16:00.000Z")
+}
+
+--- W1 again: the request is no longer REQUESTED, so nothing changes
+{
+  "matchedCount": 1,
+  "modifiedCount": 0
+}
+
+=== W2 add a diagnosis
+{
+  "matchedCount": 1,
+  "modifiedCount": 1
+}
+[
+  "J45.9",
+  "J06.9",
+  "D64.9"
+]
+
+=== W3 cancel and rebook the slot
+{
+  "cancelled": 1
+}
+rebooked doctor 2 at 09:00 as appointment 900003
+
+=== W4 double booking attempt
+Rejected as expected. code=11000 (DuplicateKey)
+E11000 duplicate key error collection: ardeliah_nosql.appointments index: uq_doctor_slot_active dup key: [[2],["2027-03-10T09:00:00.000Z"]]
+
+=== W5 invalid prescription (duration_days = 0)
+Rejected as expected. code=121 (DocumentValidationFailure)
+Document failed validation
+
+=== W6 invalid patient (gender = 'X')
+Rejected as expected. code=121 (DocumentValidationFailure)
+Document failed validation
+
+Done. Re-run insert-sample-documents.js to reset the example documents.
