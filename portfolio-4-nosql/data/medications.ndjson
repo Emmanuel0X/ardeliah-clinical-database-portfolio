@@ -1,0 +1,12 @@
+{"_id" : 1, "generic_name" : "Artemether/Lumefantrine", "form" : "tablet", "strength" : "20/120 mg"}
+{"_id" : 2, "generic_name" : "Paracetamol", "form" : "tablet", "strength" : "500 mg"}
+{"_id" : 3, "generic_name" : "Amoxicillin", "form" : "capsule", "strength" : "500 mg"}
+{"_id" : 4, "generic_name" : "Amlodipine", "form" : "tablet", "strength" : "5 mg"}
+{"_id" : 5, "generic_name" : "Metformin", "form" : "tablet", "strength" : "500 mg"}
+{"_id" : 6, "generic_name" : "Salbutamol", "form" : "inhaler", "strength" : "100 mcg"}
+{"_id" : 7, "generic_name" : "Omeprazole", "form" : "capsule", "strength" : "20 mg"}
+{"_id" : 8, "generic_name" : "Ciprofloxacin", "form" : "tablet", "strength" : "500 mg"}
+{"_id" : 9, "generic_name" : "Ferrous sulphate", "form" : "tablet", "strength" : "200 mg"}
+{"_id" : 10, "generic_name" : "Ibuprofen", "form" : "tablet", "strength" : "400 mg"}
+{"_id" : 11, "generic_name" : "Hydrocortisone", "form" : "cream", "strength" : "1%"}
+{"_id" : 12, "generic_name" : "Oral rehydration salts", "form" : "sachet", "strength" : "20.5 g"}

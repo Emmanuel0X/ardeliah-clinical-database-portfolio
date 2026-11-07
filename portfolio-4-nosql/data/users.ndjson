@@ -1,0 +1,7 @@
+{"_id" : 1, "username" : "adaeze.okafor", "role" : "PATIENT", "is_active" : true, "password_hash" : "x$placeholder-hash-01"}
+{"_id" : 2, "username" : "tunde.bakare", "role" : "PATIENT", "is_active" : true, "password_hash" : "x$placeholder-hash-02"}
+{"_id" : 3, "username" : "dr.ibrahim", "role" : "DOCTOR", "is_active" : true, "password_hash" : "x$placeholder-hash-03"}
+{"_id" : 4, "username" : "dr.eze", "role" : "DOCTOR", "is_active" : true, "password_hash" : "x$placeholder-hash-04"}
+{"_id" : 5, "username" : "reception.ngozi", "role" : "RECEPTIONIST", "is_active" : true, "password_hash" : "x$placeholder-hash-05"}
+{"_id" : 6, "username" : "lab.segun", "role" : "LAB_TECHNICIAN", "is_active" : true, "password_hash" : "x$placeholder-hash-06"}
+{"_id" : 7, "username" : "admin.clinic", "role" : "ADMIN", "is_active" : true, "password_hash" : "x$placeholder-hash-07"}

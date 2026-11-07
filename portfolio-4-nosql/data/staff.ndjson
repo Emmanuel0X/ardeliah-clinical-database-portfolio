@@ -1,0 +1,14 @@
+{"_id":1,"first_name":"Ngozi","last_name":"Umeh","staff_type":"RECEPTIONIST"}
+{"_id":2,"first_name":"Segun","last_name":"Adebayo","staff_type":"LAB_TECHNICIAN"}
+{"_id":3,"first_name":"Reception1","last_name":"Staff","staff_type":"RECEPTIONIST"}
+{"_id":4,"first_name":"Reception2","last_name":"Staff","staff_type":"RECEPTIONIST"}
+{"_id":5,"first_name":"Reception3","last_name":"Staff","staff_type":"RECEPTIONIST"}
+{"_id":6,"first_name":"Reception4","last_name":"Staff","staff_type":"RECEPTIONIST"}
+{"_id":7,"first_name":"Reception5","last_name":"Staff","staff_type":"RECEPTIONIST"}
+{"_id":8,"first_name":"Reception6","last_name":"Staff","staff_type":"RECEPTIONIST"}
+{"_id":9,"first_name":"Tech1","last_name":"Lab","staff_type":"LAB_TECHNICIAN"}
+{"_id":10,"first_name":"Tech2","last_name":"Lab","staff_type":"LAB_TECHNICIAN"}
+{"_id":11,"first_name":"Tech3","last_name":"Lab","staff_type":"LAB_TECHNICIAN"}
+{"_id":12,"first_name":"Tech4","last_name":"Lab","staff_type":"LAB_TECHNICIAN"}
+{"_id":13,"first_name":"Tech5","last_name":"Lab","staff_type":"LAB_TECHNICIAN"}
+{"_id":14,"first_name":"Tech6","last_name":"Lab","staff_type":"LAB_TECHNICIAN"}

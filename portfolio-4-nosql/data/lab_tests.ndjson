@@ -1,0 +1,8 @@
+{"_id":1,"name":"Malaria parasite (MP) count","unit":"parasites/uL","ref_range":{"low":0.00,"high":0.00}}
+{"_id":2,"name":"Haemoglobin","unit":"g/dL","ref_range":{"low":12.00,"high":17.50}}
+{"_id":3,"name":"Fasting blood glucose","unit":"mmol/L","ref_range":{"low":3.90,"high":5.60}}
+{"_id":4,"name":"Serum creatinine","unit":"umol/L","ref_range":{"low":60.00,"high":110.00}}
+{"_id":5,"name":"White blood cell count","unit":"x10^9/L","ref_range":{"low":4.00,"high":11.00}}
+{"_id":6,"name":"Widal titre (O antigen)","unit":"titre","ref_range":{"low":0.00,"high":80.00}}
+{"_id":7,"name":"Urinalysis: leucocytes","unit":"/HPF","ref_range":{"low":0.00,"high":5.00}}
+{"_id":8,"name":"Total cholesterol","unit":"mmol/L","ref_range":{"low":0.00,"high":5.20}}

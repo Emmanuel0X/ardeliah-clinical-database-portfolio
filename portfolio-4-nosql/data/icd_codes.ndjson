@@ -1,0 +1,12 @@
+{"_id" : "A01.0", "description" : "Typhoid fever"}
+{"_id" : "A09", "description" : "Infectious gastroenteritis and colitis"}
+{"_id" : "B50.9", "description" : "Plasmodium falciparum malaria, unspecified"}
+{"_id" : "D64.9", "description" : "Anaemia, unspecified"}
+{"_id" : "E11.9", "description" : "Type 2 diabetes mellitus without complications"}
+{"_id" : "I10", "description" : "Essential (primary) hypertension"}
+{"_id" : "J06.9", "description" : "Acute upper respiratory infection, unspecified"}
+{"_id" : "J45.9", "description" : "Asthma, unspecified"}
+{"_id" : "K29.7", "description" : "Gastritis, unspecified"}
+{"_id" : "L20.9", "description" : "Atopic dermatitis, unspecified"}
+{"_id" : "M54.5", "description" : "Low back pain"}
+{"_id" : "N39.0", "description" : "Urinary tract infection, site not specified"}
