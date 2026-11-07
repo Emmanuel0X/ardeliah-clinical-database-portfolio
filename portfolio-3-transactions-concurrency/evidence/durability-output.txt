@@ -1,0 +1,26 @@
+== 0. clean up any rows from a previous run
+== 1. session 1: insert row X and COMMIT
+185372|P3 durability: X committed
+== 2. session 2: insert row Y inside a transaction that is NEVER committed
+Y inserted, transaction still open
+== 3. simulate a crash: stop the server with -m immediate (no checkpoint)
+waiting for server to shut down....WARNING:  terminating connection due to immediate shutdown command
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+connection to server was lost
+ done
+server stopped
+== 4. restart; recovery messages from the server log
+2026-11-07 05:25:52.577 WAT [341] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-11-07 05:25:52.579 WAT [341] LOG:  redo starts at 0/1F7980C0
+2026-11-07 05:25:52.579 WAT [341] LOG:  redo done at 0/1F7A0AF8 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-11-07 05:25:52.587 WAT [338] LOG:  database system is ready to accept connections
+== 5. which rows survived?
+           reason           |        state        
+----------------------------+---------------------
+ P3 durability: X committed | present after crash
+(1 row)
+
+rows found: 1 (expected 1: only X)
+== 6. clean up
